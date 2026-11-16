@@ -1,0 +1,71 @@
+# Practical 2: Implement Feedforward Neural Network using Keras and TensorFlow
+
+# 1. Import the necessary packages
+import tensorflow as tf  # Import TensorFlow for building and training the model
+import matplotlib.pyplot as plt  # Import Matplotlib for plotting graphs
+
+# 2. Load the MNIST dataset
+(x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
+# Load handwritten digit images for training and testing
+
+# 3. Preprocess the data
+x_train = x_train.reshape(-1, 784).astype("float32") / 255.0
+# Convert training images into 784 values and normalize pixels between 0 and 1
+
+x_test = x_test.reshape(-1, 784).astype("float32") / 255.0
+# Convert testing images into 784 values and normalize pixels between 0 and 1
+
+# 4. Define the Feedforward Neural Network
+model = tf.keras.Sequential([
+    tf.keras.layers.Input(shape=(784,)),  # Define 784 input values
+    tf.keras.layers.Dense(128, activation="relu"),  # First hidden layer with 128 neurons
+    tf.keras.layers.Dense(64, activation="relu"),  # Second hidden layer with 64 neurons
+    tf.keras.layers.Dense(10, activation="softmax")  # Output layer with 10 neurons for digits 0-9
+])
+
+# 5. Compile the model using SGD optimizer
+model.compile(
+    optimizer=tf.keras.optimizers.SGD(learning_rate=0.01),  # Use SGD to update model weights
+    loss="sparse_categorical_crossentropy",  # Calculate prediction error
+    metrics=["accuracy"]  # Measure model accuracy
+)
+
+# 6. Train the model
+history = model.fit(
+    x_train, y_train,  # Provide training images and labels
+    epochs=10,  # Train the model for 10 rounds
+    batch_size=32,  # Process 32 images at a time
+    validation_split=0.1,  # Use 10% of training data for validation
+    verbose=1  # Display training progress
+)
+
+# 7. Evaluate the model
+test_loss, test_accuracy = model.evaluate(x_test, y_test, verbose=0)
+# Test the trained model using testing data
+
+print("Test Loss:", test_loss)  # Display test loss
+print("Test Accuracy:", test_accuracy)  # Display test accuracy
+
+# 8. Plot training loss and accuracy
+plt.figure(figsize=(12, 4))  # Set the size of the graph
+
+# Training and validation loss
+plt.subplot(1, 2, 1)  # Create the first graph
+plt.plot(history.history["loss"], label="Training Loss")  # Plot training loss
+plt.plot(history.history["val_loss"], label="Validation Loss")  # Plot validation loss
+plt.xlabel("Epoch")  # Label the X-axis
+plt.ylabel("Loss")  # Label the Y-axis
+plt.title("Training and Validation Loss")  # Set graph title
+plt.legend()  # Display graph labels
+
+# Training and validation accuracy
+plt.subplot(1, 2, 2)  # Create the second graph
+plt.plot(history.history["accuracy"], label="Training Accuracy")  # Plot training accuracy
+plt.plot(history.history["val_accuracy"], label="Validation Accuracy")  # Plot validation accuracy
+plt.xlabel("Epoch")  # Label the X-axis
+plt.ylabel("Accuracy")  # Label the Y-axis
+plt.title("Training and Validation Accuracy")  # Set graph title
+plt.legend()  # Display graph labels
+
+plt.tight_layout()  # Adjust spacing between graphs
+plt.show()  # Display both graphs
