@@ -1,0 +1,128 @@
+# P3: Image Classification using CNN
+# A. Loading and preprocessing image data
+import tensorflow as tf
+import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow.keras.models import Sequential # Creates CNN model
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Flatten # CNN layers
+
+
+# Load CIFAR-10 dataset
+(x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+# Normalize images
+x_train = x_train / 255.0
+x_test = x_test / 255.0
+# Display dataset shapes
+print("Training data:", x_train.shape)
+print("Testing data:", x_test.shape)
+
+
+# B. Defining the model architecture
+model = Sequential([ # Creates CNN model layer by layer
+    Conv2D(32, (3,3), activation='relu', input_shape=(32,32,3)),
+    # Extracts image features using 32 filters
+    MaxPooling2D((2,2)),
+    # Reduces image size and keeps important features
+    Conv2D(64, (3,3), activation='relu'),
+    # Extracts more image features using 64 filters
+    MaxPooling2D((2,2)),
+    # Reduces image size again
+    Flatten(),
+    # Converts 2D features into a 1D array
+    Dense(64, activation='relu'),
+    # Learns patterns for classification
+    Dense(10, activation='softmax')
+    # Gives probabilities for 10 classes
+])
+
+# Display model summary
+model.summary()
+
+
+# Compile the model
+model.compile(
+    optimizer='adam',  # Updates model weights
+    loss='sparse_categorical_crossentropy',  # Measures prediction error
+    metrics=['accuracy']  # Measures prediction accuracy
+)
+
+
+print(tf.keras.datasets.cifar10.load_data.__doc__) # Shows information about the dataset
+
+
+# C. Training the model
+history = model.fit(
+    x_train, y_train,  # Training images and labels
+    epochs=5,           # Trains the model 5 times
+    validation_data=(x_test, y_test)  # Checks performance after each epoch
+)
+
+
+# D. Estimating the model's performance
+loss, accuracy = model.evaluate(x_test, y_test)
+print("Test Loss:", loss)
+print("Test Accuracy:", accuracy)
+
+
+# Plot Training and Validation Loss
+plt.plot(history.history['loss'], label='Training Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.xlabel("Epochs")
+plt.ylabel("Loss")
+plt.title("Training vs Validation Loss")
+plt.legend() # Displays graph labels
+plt.show()
+
+
+# Plot Training and Validation Accuracy
+plt.plot(history.history['accuracy'], label='Training Accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+plt.xlabel("Epochs")
+plt.ylabel("Accuracy")
+plt.title("Training vs Validation Accuracy")
+plt.legend()
+plt.show()
+
+
+# Prediction
+y_pred = model.predict(x_test)
+# Predicts the classes of test images
+y_classes = np.argmax(y_pred, axis=1)
+# Converts probabilities into class numbers
+
+# Define class names
+classes = ["airplane", "automobile", "bird", "cat", "deer",
+           "dog", "frog", "horse", "ship", "truck"]
+
+# Display actual and predicted class
+print("Actual:", classes[y_test[3][0]])
+print("Predicted:", classes[y_classes[3]])
+
+
+model.evaluate(x_test, y_test) # Displays test loss and accuracy again
+print("First 6 labels:", y_train[:6])
+
+
+import matplotlib.pyplot as plt
+for i in range(6):
+    plt.imshow(x_train[i])
+    plt.title("Label: " + str(y_train[i][0]))   # Shows its numerical label
+    plt.axis('off')  # Hides axis numbers
+    plt.show()
+
+
+import matplotlib.pyplot as plt
+
+# Names of CIFAR-10 classes
+classes = ["airplane", "automobile", "bird", "cat", "deer",
+           "dog", "frog", "horse", "ship", "truck"]
+
+# Display first 6 images with their class names
+for i in range(6):
+    plt.imshow(x_train[i])
+    plt.title("Label: " + classes[y_train[i][0]])
+    plt.axis('off')
+    plt.show()
+
+
+    
