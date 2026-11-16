@@ -1,0 +1,76 @@
+# Practical 5: Implement Continuous Bag of Words (CBOW) Model
+
+# 1. Import libraries
+import numpy as np  # Used to work with arrays
+from tensorflow.keras.preprocessing.text import Tokenizer  # Converts words into numbers
+
+# 2. Data Preparation
+text = "I love machine learning"  # Sample sentence
+
+tokenizer = Tokenizer()  # Create a tokenizer object
+tokenizer.fit_on_texts([text])  # Learn the words from the sentence
+sequence = tokenizer.texts_to_sequences([text])[0]  # Convert words into numbers
+
+print("Word Index:", tokenizer.word_index)  # Display each word and its number
+print("Sequence:", sequence)  # Display the sentence as numbers
+
+# 3. Generate Training Data
+X = []  # Stores the context words (input)
+Y = []  # Stores the target words (output)
+
+# Use surrounding words as input and the middle word as output
+for i in range(1, len(sequence)-1):
+    X.append([sequence[i-1], sequence[i+1]])  # Store previous and next words
+    Y.append(sequence[i])  # Store the middle word to be predicted
+
+X = np.array(X)  # Convert input data into a NumPy array
+Y = np.array(Y)  # Convert target data into a NumPy array
+
+print("Context:", X)  # Display input context words
+print("Target:", Y)  # Display target words
+
+# 4. Build the CBOW Model
+import tensorflow as tf  # Import TensorFlow
+from tensorflow.keras.models import Sequential  # Used to create a model
+from tensorflow.keras.layers import Embedding, Lambda, Dense  # Import model layers
+
+model = Sequential([
+    Embedding(5, 10),  # Convert word numbers into 10-dimensional vectors
+
+    Lambda(lambda x: tf.reduce_mean(x, axis=1)),  # Calculate the average of context word vectors
+
+    Dense(5, activation="softmax")  # Predict the target word
+])
+
+# 5. Compile the model
+model.compile(
+    optimizer="adam",  # Updates model weights to improve learning
+    loss="sparse_categorical_crossentropy",  # Measures prediction error
+    metrics=["accuracy"]  # Measures prediction accuracy
+)
+
+# 6. Train the model
+history = model.fit(X, Y, epochs=100, verbose=0)  # Train the model for 100 epochs
+
+print("Model trained successfully")  # Display training message
+print("Final accuracy:", history.history['accuracy'][-1])  # Display final training accuracy
+
+model.summary()  # Display the model structure
+
+# 7. Plot Training Accuracy
+import matplotlib.pyplot as plt  # Import library for plotting graphs
+
+plt.plot(history.history['accuracy'])  # Plot accuracy for each epoch
+plt.xlabel('Epochs')  # Label the X-axis
+plt.ylabel('Accuracy')  # Label the Y-axis
+plt.title("CBOW Training Accuracy")  # Give a title to the graph
+plt.show()  # Display the graph
+
+# Predict the word using the first context example
+prediction = model.predict(X[:1], verbose=0)
+# Find the index of the word with the highest probability
+word_id = np.argmax(prediction)
+# Convert the predicted number back into a word
+word = tokenizer.index_word[word_id]
+# Display the predicted word
+print("Predicted word:", word)
