@@ -1,0 +1,83 @@
+
+# Practical 4: Anomaly Detection using Autoencoder
+
+# 1. Import libraries
+import tensorflow as tf  # Import TensorFlow
+from tensorflow import keras  # Import Keras for building the model
+from tensorflow.keras import layers  # Import neural network layers
+import numpy as np  # Used for mathematical operations
+import matplotlib.pyplot as plt  # Used for displaying graphs and images
+
+# 2. Load and preprocess MNIST data
+(x_train, _), (x_test, _) = keras.datasets.mnist.load_data()
+# Load MNIST images; underscore means labels are ignored
+
+x_train = x_train.astype("float32") / 255.0  # Convert training pixels into values between 0 and 1
+x_test = x_test.astype("float32") / 255.0  # Convert testing pixels into values between 0 and 1
+
+x_train = x_train.reshape(-1, 784)  # Convert training images into 784 values
+x_test = x_test.reshape(-1, 784)  # Convert testing images into 784 values
+
+# 3. Encoder
+input_img = keras.Input(shape=(784,))  # Define input with 784 values
+encoded = layers.Dense(128, activation="relu")(input_img)  # First encoder layer with 128 neurons
+encoded = layers.Dense(32, activation="relu")(encoded)  # Convert input into 32 values (latent representation)
+
+# 4. Decoder
+decoded = layers.Dense(128, activation="relu")(encoded)  # Reconstruct using 128 neurons
+decoded = layers.Dense(784, activation="sigmoid")(decoded)  # Reconstruct the original 784 values
+
+# Create Autoencoder
+autoencoder = keras.Model(input_img, decoded)  # Combine encoder and decoder into one model
+
+# 5. Compile model
+autoencoder.compile(
+    optimizer="adam",  # Optimizer used to improve learning
+    loss="binary_crossentropy",  # Measures reconstruction error
+    metrics=["accuracy"]  # Displays accuracy during training
+)
+
+# 6. Train model
+autoencoder.fit(
+    x_train, x_train,  # Use the same images as input and output
+    epochs=10,  # Train the model for 10 rounds
+    batch_size=256,  # Process 256 images at a time
+    validation_data=(x_test, x_test)  # Check performance using test images
+)
+
+# 7. Anomaly Detection
+decoded_imgs = autoencoder.predict(x_test)  # Reconstruct the test images
+
+error = np.mean(np.square(x_test - decoded_imgs), axis=1)
+# Calculate reconstruction error for each image
+
+threshold = np.percentile(error, 95)  # Set the 95th percentile as the threshold
+
+anomalies = error > threshold  # Mark images with error above threshold as anomalies
+
+print("Anomaly Threshold:", threshold)  # Display the threshold value
+print("Number of anomalies:", np.sum(anomalies))  # Display the number of detected anomalies
+
+# 8. Display original and reconstructed images
+plt.figure(figsize=(10, 4))  # Set the figure size
+
+for i in range(5):  # Repeat for the first 5 images
+    plt.subplot(2, 5, i + 1)  # Select position for original image
+    plt.imshow(x_test[i].reshape(28, 28), cmap="gray")  # Display original image
+    plt.title("Original")  # Set image title
+    plt.axis("off")  # Hide axis numbers
+
+    plt.subplot(2, 5, i + 6)  # Select position for reconstructed image
+    plt.imshow(decoded_imgs[i].reshape(28, 28), cmap="gray")  # Display reconstructed image
+    plt.title("Reconstructed")  # Set image title
+    plt.axis("off")  # Hide axis numbers
+
+plt.show()  # Display original and reconstructed images
+
+# 9. Plot anomaly error
+plt.hist(error, bins=50)  # Display distribution of reconstruction errors
+plt.axvline(threshold, color="red", linestyle="--")  # Draw red line at the threshold
+plt.xlabel("Reconstruction Error")  # Label X-axis
+plt.ylabel("Number of Images")  # Label Y-axis
+plt.title("Anomaly Detection")  # Set graph title
+plt.show()  # Display the anomaly detection graph
